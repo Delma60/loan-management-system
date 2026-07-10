@@ -51,25 +51,89 @@ Five core tables (see Chapter 3.13 for full field lists):
 - **Repayment** — Payment_ID, Loan_ID (FK), Payment_Date, Amount_Paid, Balance, Payment_Status
 - **Prediction** — Prediction_ID, Customer_ID (FK), Loan_ID (FK), Prediction_Result, Prediction_Date
 
-## Getting Started (reference stack)
+## Project Structure
 
-1. Install XAMPP and start Apache + MySQL.
-2. Clone/copy the project into `htdocs/loan-management-system`.
-3. Create the database via phpMyAdmin and import the schema (see `/database` once created).
-4. Update DB credentials in the config file.
-5. Visit `http://localhost/loan-management-system` in your browser.
+```text
+loan-management-system/
+├── index.php                 # entry point → redirects to login/dashboard
+├── config/
+│   └── db.php                # PDO connection (prepared statements only)
+├── includes/
+│   ├── config.php            # app + DB settings (env-overridable)
+│   ├── auth.php              # login, session, access control
+│   ├── helpers.php           # status badges, money formatting
+│   ├── loan.php              # repayment-schedule generation
+│   ├── prediction.php        # rule-based eligibility scoring
+│   ├── header.php / footer.php   # shared sidebar + topbar layout
+├── modules/
+│   ├── login.php, logout.php, dashboard.php
+│   ├── customers/            # register, list, edit
+│   ├── loans/               # apply, list, approve (review), predict
+│   ├── repayments/          # record, history
+│   └── reports/             # customers, loans, repayments, defaults, monthly, annual
+├── assets/                   # css/, js/, uploads/ (loan documents)
+├── database/
+│   ├── schema.sql            # table definitions (source of truth)
+│   └── seed.sql              # initial admin account
+└── tests/
+    ├── run-tests.php         # pure-logic unit tests (no DB needed)
+    └── test-cases.md         # manual QA + Chapter 4.10 test table
+```
+
+## Getting Started (local / XAMPP)
+
+1. Install [XAMPP](https://www.apachefriends.org/) and start **Apache** + **MySQL**.
+2. Copy the project into `htdocs/loan-management-system`.
+3. Create the database and load the schema + seed (from the project root):
+   ```bash
+   # via the mysql client
+   mysql -u root < database/schema.sql
+   mysql -u root loan_management_system < database/seed.sql
+   ```
+   …or import both files through **phpMyAdmin** (`http://localhost/phpmyadmin`).
+4. The default credentials in `includes/config.php` match a stock XAMPP install
+   (`root`, no password). No edit needed for local use.
+5. Visit `http://localhost/loan-management-system/`.
+
+**Default login:** `admin` / `admin123` — change this immediately in any real
+deployment.
+
+### Running the tests
+
+```bash
+php tests/run-tests.php
+```
+
+Covers the rule-based prediction and repayment-schedule maths (no database
+required). See `tests/test-cases.md` for the manual QA checklist.
+
+## Deployment
+
+**Decision: local XAMPP is the primary target** (project demo / defense), with a
+clear path to shared hosting or a VPS for a live pilot.
+
+Configuration reads environment variables first and falls back to XAMPP
+defaults, so **no code changes or committed secrets** are needed to deploy —
+set these on the host instead:
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `APP_ENV` | `production` hides error details and logs them | `development` |
+| `DB_HOST` / `DB_NAME` / `DB_USER` / `DB_PASS` | database connection | XAMPP defaults |
+| `BASE_URL` | URL path the app is served from | `/loan-management-system` |
+
+For a production host: set `APP_ENV=production` (errors are logged, not shown),
+serve over HTTPS (session cookies are then flagged `Secure`), point the document
+root appropriately, and set a real DB password. `assets/uploads/` must remain
+writable by the web server.
 
 ## Project Status
 
-This repo now includes an initial PHP/MySQL skeleton for the Loan Management System, including:
-
-- `public/` for entry pages and authenticated views
-- `includes/` for shared config, DB, auth, and layout components
-- `assets/` for CSS and JS
-- `database/schema.sql` for table creation
-- `database/seed.sql` for an initial admin account
-
-The current skeleton supports login, dashboard, customers, loans, repayments, and reports placeholders.
+Fully implemented: authentication, dashboard, customer registration, loan
+application, rule-based eligibility prediction, approval with auto-generated
+repayment schedules, repayment recording with overdue flagging, and the full
+report suite (customer, loan, repayment, default, monthly, annual) with a
+print-friendly view.
 
 ## Out of Scope
 

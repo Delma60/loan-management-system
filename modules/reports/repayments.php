@@ -5,20 +5,15 @@ $pdo = getDatabaseConnection();
 
 $search = trim($_GET['q'] ?? '');
 $params = [];
-$sql = 'SELECT r.*, l.Loan_ID, l.Loan_Type, l.Loan_Amount, c.Full_Name
+$sql = 'SELECT r.*, l.Loan_Type, l.Loan_Amount, c.Full_Name
         FROM repayment r
         JOIN loan l ON r.Loan_ID = l.Loan_ID
         JOIN customer c ON l.Customer_ID = c.Customer_ID';
-$where = [];
 
 if ($search !== '') {
-    $where[] = '(c.Full_Name LIKE ? OR l.Loan_Type LIKE ? OR r.Payment_Status LIKE ?)';
+    $sql .= ' WHERE c.Full_Name LIKE ? OR l.Loan_Type LIKE ? OR r.Payment_Status LIKE ?';
     $like = '%' . $search . '%';
     $params = [$like, $like, $like];
-}
-
-if ($where) {
-    $sql .= ' WHERE ' . implode(' AND ', $where);
 }
 
 $sql .= ' ORDER BY r.Payment_Date DESC, r.Payment_ID DESC';
@@ -26,51 +21,38 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $repayments = $stmt->fetchAll();
 
-$flash = isset($_GET['recorded']) ? 'Repayment recorded successfully.' : '';
+$totalCollected = 0.0;
+foreach ($repayments as $payment) {
+    $totalCollected += (float) $payment['Amount_Paid'];
+}
 
-$pageTitle = 'Repayments';
+$pageTitle = 'Repayment Report';
 require_once __DIR__ . '/../../includes/header.php';
+$reportTitle = 'Repayment Report';
+require __DIR__ . '/_print_head.php';
 ?>
 <div class="page-head">
     <div>
-        <h1>Repayment History</h1>
-        <p class="page-sub">Track repayment activity and loan balances.</p>
+        <h1>Repayment Report</h1>
+        <p class="page-sub">Repayment activity across customers and loans.</p>
     </div>
     <div class="page-actions">
-        <a href="record.php" class="btn btn-primary">Record Repayment</a>
+        <a href="index.php" class="btn btn-outline-secondary">Back to Reports</a>
+        <button type="button" class="btn btn-primary" onclick="window.print()">Print report</button>
     </div>
 </div>
-
-<?php if ($flash): ?>
-    <div class="alert alert-success" role="status" data-autodismiss><?php echo htmlspecialchars($flash); ?></div>
-<?php endif; ?>
-
 <div class="filter-bar mb-3">
     <form class="row g-2 align-items-center" method="get">
         <div class="col-sm-8 col-md-6">
-            <input type="search" id="q" name="q" class="form-control" placeholder="Search by customer, loan type, or status" value="<?php echo htmlspecialchars($search); ?>">
+            <input type="search" id="q" name="q" class="form-control" placeholder="Search customer, loan type, or status" value="<?php echo htmlspecialchars($search); ?>">
         </div>
         <div class="col-sm-4 col-md-2">
             <button type="submit" class="btn btn-outline-secondary w-100">Search</button>
         </div>
-        <?php if ($search !== ''): ?>
-            <div class="col-sm-4 col-md-2">
-                <a href="history.php" class="btn btn-outline-secondary w-100">Clear</a>
-            </div>
-        <?php endif; ?>
     </form>
 </div>
-
 <?php if (count($repayments) === 0): ?>
-    <div class="empty-state">
-        <div class="empty-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        </div>
-        <p><?php echo $search !== '' ? 'No repayments match your search.' : 'No repayments recorded yet.'; ?></p>
-        <?php if ($search === ''): ?>
-            <a href="record.php" class="btn btn-primary">Record Repayment</a>
-        <?php endif; ?>
-    </div>
+    <div class="empty-state"><p>No repayment records found.</p></div>
 <?php else: ?>
     <div class="table-card">
         <div class="table-responsive">
@@ -97,6 +79,13 @@ require_once __DIR__ . '/../../includes/header.php';
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="2">Total collected</th>
+                        <th class="text-end"><?php echo naira($totalCollected); ?></th>
+                        <th colspan="3"></th>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>

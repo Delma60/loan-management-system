@@ -1,28 +1,30 @@
-# PHP / XAMPP
+# Dependencies
 /vendor/
 /node_modules/
-/.env
-/.env.local
-/.vscode/
-/.idea/
-/.history/
-/public/uploads/
-/public/tmp/
-/config.php
-/config/*.php
-/includes/config.php
-/htdocs/
-.DS_Store
-Thumbs.db
-*.log
-*.cache
-*.sql
-
-# Composer
 composer.lock
 
-# OS files
+# Local environment overrides (credentials come from real env vars in prod)
+/.env
+/.env.local
+
+# Editors / OS
+/.vscode/
+/.idea/
+.idea/
+/.history/
+.DS_Store
+Thumbs.db
 desktop.ini
 
-# PHPStorm
-.idea/
+# Logs / caches
+*.log
+*.cache
+
+# User-uploaded loan documents (keep the folder, ignore its contents)
+/assets/uploads/*
+!/assets/uploads/.gitkeep
+
+# Ad-hoc SQL dumps, but keep the committed schema + seed
+*.sql
+!/database/schema.sql
+!/database/seed.sql

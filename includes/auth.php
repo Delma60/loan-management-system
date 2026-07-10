@@ -1,11 +1,12 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/helpers.php';
 
 function ensureAuthenticated()
 {
     if (empty($_SESSION['admin_id'])) {
-        header('Location: ' . BASE_URL . '/public/login.php');
+        header('Location: ' . BASE_URL . '/modules/login.php');
         exit;
     }
 }
@@ -30,6 +31,8 @@ function loginAdmin($username, $password)
     $admin = $stmt->fetch();
 
     if ($admin && password_verify($password, $admin['Password'])) {
+        // Prevent session fixation: issue a fresh session ID on login.
+        session_regenerate_id(true);
         $_SESSION['admin_id'] = $admin['Admin_ID'];
         return true;
     }
