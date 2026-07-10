@@ -1,0 +1,28 @@
+# PHP / XAMPP
+/vendor/
+/node_modules/
+/.env
+/.env.local
+/.vscode/
+/.idea/
+/.history/
+/public/uploads/
+/public/tmp/
+/config.php
+/config/*.php
+/includes/config.php
+/htdocs/
+.DS_Store
+Thumbs.db
+*.log
+*.cache
+*.sql
+
+# Composer
+composer.lock
+
+# OS files
+desktop.ini
+
+# PHPStorm
+.idea/
